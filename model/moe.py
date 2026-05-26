@@ -60,7 +60,9 @@ class MoEFFN(nn.Module):
         tokens = x.reshape(batch_size * seq_len, hidden_size)
 
         router_probs, topk_probs, topk_indices = self.router(tokens)
-        routed = torch.zeros_like(tokens)
+
+        # First pass: collect expert outputs to infer the autocast dtype
+        expert_outputs: list[tuple[torch.Tensor, torch.Tensor, torch.Tensor]] = []
         dropped = torch.zeros((), device=x.device, dtype=torch.long)
         capacity = math.ceil(self.capacity_factor * tokens.shape[0] * self.top_k / self.num_experts)
 
@@ -77,6 +79,19 @@ class MoEFFN(nn.Module):
 
             expert_out = expert(tokens.index_select(0, token_pos))
             weights = topk_probs[token_pos, choice_pos].unsqueeze(-1).to(expert_out.dtype)
+            expert_outputs.append((token_pos, expert_out, weights))
+
+        # Accumulation buffer must match the expert output dtype (may be bf16 under autocast)
+        if expert_outputs:
+            routed = torch.zeros(
+                tokens.shape[0], tokens.shape[1],
+                dtype=expert_outputs[0][1].dtype,
+                device=x.device,
+            )
+        else:
+            routed = torch.zeros_like(tokens)
+
+        for token_pos, expert_out, weights in expert_outputs:
             routed.index_add_(0, token_pos, expert_out * weights)
 
         if self.shared_ffn is not None:

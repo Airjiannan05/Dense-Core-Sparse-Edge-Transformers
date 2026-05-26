@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 import torch
+from tqdm import tqdm
 
 from model import DenseCoreSparseEdgeConfig, DenseCoreSparseEdgeTransformer
 from model.metrics import estimate_active_flops_per_token, perplexity
@@ -67,7 +68,9 @@ def main() -> None:
 
     model.train()
     start = time.perf_counter()
-    for step in range(total_steps):
+    pbar = tqdm(range(total_steps), desc="training", unit="step", dynamic_ncols=True)
+
+    for step in pbar:
         lr = cosine_lr(args.learning_rate, step, total_steps, args.warmup_steps)
         for group in optimizer.param_groups:
             group["lr"] = lr
@@ -89,16 +92,23 @@ def main() -> None:
             if rows:
                 write_jsonl(output_dir / "routing_trace.jsonl", rows)
 
+        elapsed = max(time.perf_counter() - start, 1e-6)
+        tokens_seen = (step + 1) * args.batch_size * seq_len
+        lm_loss_val = out["lm_loss"].item()
+        aux_loss_val = out["aux_loss"].item()
+        tok_sec = tokens_seen / elapsed
+
         if step % args.log_interval == 0:
-            elapsed = max(time.perf_counter() - start, 1e-6)
-            tokens_seen = (step + 1) * args.batch_size * seq_len
             log_router_metrics(out["router_info"], prefix=f"step={step}")
-            print(
-                f"step={step} loss={loss.item():.4f} "
-                f"lm_loss={out['lm_loss'].item():.4f} aux_loss={out['aux_loss'].item():.4f} "
-                f"ppl={perplexity(out['lm_loss'].item()):.2f} tokens_sec={tokens_seen / elapsed:.1f} "
-                f"gpu_memory_mb={gpu_memory_mb():.1f}"
-            )
+
+        pbar.set_postfix(
+            loss=f"{loss.item():.3f}",
+            lm=f"{lm_loss_val:.3f}",
+            aux=f"{aux_loss_val:.3f}",
+            ppl=f"{perplexity(lm_loss_val):.1f}",
+            tok_s=f"{tok_sec:.0f}",
+            mem=f"{gpu_memory_mb():.0f}M",
+        )
 
     torch.save({"model": model.state_dict(), "config": cfg_dict}, output_dir / "checkpoint.pt")
 

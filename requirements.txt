@@ -1,4 +1,5 @@
 torch
 PyYAML
 pytest
+tqdm
 datasets

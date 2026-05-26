@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Training outputs
+runs/
+checkpoints/
+*.pt
+
+# Routing traces (large JSON files)
+*_trace.jsonl
+routing_trace*
+
+# pytest cache
+.pytest_cache/
+
+# Environment
+.env
+.venv
+
+#doc
+thinking.md

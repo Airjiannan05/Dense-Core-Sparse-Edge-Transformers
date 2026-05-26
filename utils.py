@@ -37,7 +37,7 @@ class RandomTokenStream:
         self.vocab_size = vocab_size
         self.seq_len = seq_len
         self.batch_size = batch_size
-        self.generator = torch.Generator().manual_seed(seed)
+        self.generator = torch.Generator(device="cpu").manual_seed(seed)
 
     def next_batch(self, device: torch.device) -> torch.Tensor:
         return torch.randint(
@@ -45,8 +45,7 @@ class RandomTokenStream:
             high=self.vocab_size,
             size=(self.batch_size, self.seq_len),
             generator=self.generator,
-            device=device,
-        )
+        ).to(device)
 
 
 class ByteTextTokenStream:

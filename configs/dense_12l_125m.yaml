@@ -1,0 +1,23 @@
+# 125M-scale config for Dense baseline (GPU-friendly for 21.5GB VRAM)
+model:
+  architecture: dense_core_sparse_edge
+  hidden_size: 768
+  num_layers: 12
+  num_attention_heads: 12
+  intermediate_size: 2048
+  vocab_size: 32000
+  max_position_embeddings: 1024
+  attention:
+    type: dense
+  ffn:
+    type: dense_core_sparse_edge
+    placement: dense
+  moe:
+    num_experts: 8
+    top_k: 2
+    shared_expert: true
+    expert_intermediate_size: 1024
+    router_aux_loss_coef: 0.01
+    capacity_factor: 1.25
+    router_jitter_noise: 0.0
+    drop_tokens: false
