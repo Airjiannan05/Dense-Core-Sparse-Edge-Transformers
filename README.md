@@ -178,6 +178,13 @@ python estimate_flops.py --config configs/edge_moe_24l.yaml
 python analyze_routing.py --trace runs/edge_moe_24l/routing_trace.jsonl
 ```
 
+### Ubuntu中开启nvtop看显卡占用
+```bash
+sudo apt update && sudo apt install nvtop
+
+nvtop
+```
+
 ## 配置文件
 
 配置文件通过 YAML 控制所有架构参数：

@@ -44,4 +44,7 @@ routing_trace*
 .venv
 
 #doc
+docs/
 thinking.md
+
+data/
