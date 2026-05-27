@@ -3,3 +3,6 @@ PyYAML
 pytest
 tqdm
 datasets
+matplotlib>=3.7       # plot_runs.py 需要
+numpy>=1.24           # analyze_route_consistency.py, analyze_expert_specialization.py 需要
+scipy>=1.10           # analyze_expert_specialization.py 互信息计算（可选但推荐）

@@ -21,6 +21,6 @@ python eval.py \
   --steps 5
 
 echo "=== FLOPs estimation check ==="
-python estimate_flops.py --config configs/sanity_tiny.yaml
+python analysis/estimate_flops.py --config configs/sanity_tiny.yaml
 
 echo "=== All checks passed ==="

@@ -57,7 +57,15 @@ class ByteTextTokenStream:
         batch_size: int,
         seed: int,
     ):
-        self.texts = iter(texts)
+        # For list/tuple sources (e.g. local files), we can cycle on exhaustion.
+        # For streaming generators, we fall back to EOS padding (best-effort).
+        if isinstance(texts, (list, tuple)):
+            self._texts_source = list(texts)    # materialize once, safe for small local files
+            self._replayable = True
+        else:
+            self._texts_source = texts
+            self._replayable = False
+        self.texts = iter(self._texts_source)
         self.vocab_size = vocab_size
         self.seq_len = seq_len
         self.batch_size = batch_size
@@ -71,12 +79,19 @@ class ByteTextTokenStream:
             try:
                 text = next(self.texts)
             except StopIteration:
-                self.texts = iter([""])
-                text = ""
+                if self._replayable:
+                    # Cycle back to the beginning instead of padding with EOS.
+                    self.texts = iter(self._texts_source)
+                    text = next(self.texts)
+                else:
+                    # Streaming source exhausted — pad with EOS (best-effort fallback).
+                    text = ""
             encoded = [b % self.vocab_size for b in text.encode("utf-8", errors="ignore")]
-            self.buffer.extend(encoded + [self.eos_id])
-            if not encoded:
-                self.buffer.extend([self.eos_id] * needed)
+            if encoded:
+                self.buffer.extend(encoded + [self.eos_id])
+            else:
+                # Empty text: pad at least one EOS to avoid tight loop.
+                self.buffer.append(self.eos_id)
 
         chunk = self.buffer[:needed]
         del self.buffer[:needed]

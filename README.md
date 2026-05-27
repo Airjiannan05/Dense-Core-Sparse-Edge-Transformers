@@ -67,10 +67,21 @@ project/
 │   ├── transformer.py        # 主模型 + RMSNorm + config
 │   ├── metrics.py            # FLOPs 估算 / perplexity
 │   └── upcycling.py          # Dense → MoE 初始化
+├── infrastructure/           # 训练基础设施
+│   ├── __init__.py
+│   ├── metrics_logger.py     # JSONL 日志写入器
+│   ├── run_manager.py        # 运行目录 & 元数据管理
+│   └── checkpoint_manager.py # Checkpoint 保存/加载
+├── analysis/                 # 分析 & 可视化工具
+│   ├── __init__.py
+│   ├── analyze_routing.py    # 路由分布分析
+│   ├── analyze_route_consistency.py  # 路由一致性分析
+│   ├── analyze_expert_specialization.py  # 专家特化 MI 分析
+│   ├── summarize_runs.py     # 跨运行汇总对比
+│   ├── plot_runs.py          # 训练曲线绘制（7 种图表）
+│   └── estimate_flops.py     # FLOPs 估算
 ├── train.py                  # 训练脚本
 ├── eval.py                   # 评估脚本
-├── analyze_routing.py        # 路由分析
-├── estimate_flops.py         # FLOPs 估算
 ├── utils.py                  # 工具函数
 ├── scripts/                  # Shell 脚本
 │   ├── run_dense.sh
@@ -84,7 +95,8 @@ project/
 │   ├── test_load_balance_loss.py
 │   ├── test_placement.py
 │   ├── test_dense_attention_unchanged.py
-│   └── test_upcycling.py
+│   ├── test_upcycling.py
+│   └── test_experiment_system.py
 ├── requirements.txt
 └── README.md
 ```
@@ -169,13 +181,13 @@ python train.py --config configs/dense_24l.yaml --dataset fineweb_sample \
 python eval.py --config configs/edge_moe_24l.yaml \
   --checkpoint runs/edge_moe_24l/checkpoint.pt --steps 20
 
-python estimate_flops.py --config configs/edge_moe_24l.yaml
+python analysis/estimate_flops.py --config configs/edge_moe_24l.yaml
 ```
 
 ### 路由分析
 
 ```bash
-python analyze_routing.py --trace runs/edge_moe_24l/routing_trace.jsonl
+python analysis/analyze_routing.py --trace runs/edge_moe_24l/routing_trace.jsonl
 ```
 
 ### Ubuntu中开启nvtop看显卡占用
